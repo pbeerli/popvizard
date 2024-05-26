@@ -1,0 +1,54 @@
+README for the program popvizard.py
+[* see also at very bottom for popvizard2.py]
+
+popvizard.py does visualize population models and samples taken from such population models:
+- Wright-Fisher model
+- Canning exchangeable model (needs an additional parameter for offspring variance)
+- Moran model
+
+For each of the models one can specify an exponential growth rate.
+
+Input/Calling syntax
+--------------------
+Example calls are:
+
+python popvizard.py -m WrightFisher
+python popvizard.py --model Moran
+python popvizard.py --model WrightFisher -r 0.014
+python popvizard.py -m Moran  -r -0.011
+python popvizard.py -m Canning --offspring 1.5
+python popvizard.py --model Canning -o 1.5 --growth 0.01
+
+The number of individuals and other parameters can be given as options:
+Check out all options using: 
+python popvizard.py --help
+
+
+Output
+------
+A PDF file is created with two plots: 
+- the population history through time 
+- and a genealogy of the sample
+
+The default filename is set in the DEFAULT section of the program and is
+wf.pdf
+which happens to be an ambigous name: wright-fisher, water frog, .... :-)
+
+
+popvizard2.py
+-------------
+includes bottlenecks, but is not as well tested as popvizard.py,
+the popvizard2 adds the option 
+-b or --bottleneck
+with option "{g1:ne1,g2,ne2,...}" this forces a particular population size at generationtion gi. Example:
+
+python popvizard2.py -b "{20:10,30:40,40:10}"
+
+you need the quotations!
+
+
+------
+(c) 2015 Peter Beerli
+
+
+
