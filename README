@@ -6,6 +6,9 @@ popvizard.py does visualize population models and samples taken from such popula
 - Canning exchangeable model (needs an additional parameter for offspring variance)
 - Moran model
 
+Origin of the name: popvizard.py
+POPulation VIsualization wiZARD
+
 For each of the models one can specify an exponential growth rate.
 
 Input/Calling syntax
@@ -53,7 +56,7 @@ python popvizard.py --ratio -1 -size "[16,9]" -s 2 -n 20 -ms 10 -t 50 --seed 31 
 
 
 ------
-(c) 2024 Peter Beerli
+(c) 2025 Peter Beerli
 
 
 
