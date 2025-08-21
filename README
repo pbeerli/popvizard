@@ -46,9 +46,14 @@ python popvizard2.py -b "{20:10,30:40,40:10}"
 
 you need the quotations!
 
+For generating populations for presentations use something like this:
+python popvizard.py --ratio -1 -size "[16,9]" -s 0 -n 20 -ms 10 -t 50 --seed 31 -f coal-2024-0samp-0.pdf
+python popvizard.py --ratio -1 -size "[16,9]" -s 2 -n 20 -ms 10 -t 50 --seed 31 -f coal-2024-2samp-1.pdf
+
+
 
 ------
-(c) 2015 Peter Beerli
+(c) 2024 Peter Beerli
 
 
 

@@ -21,6 +21,7 @@ import sys
 import scipy as sc 
 import numpy as np
 from functools import reduce
+import time
 import matplotlib
 matplotlib.use('PDF')
 import matplotlib.pyplot as plt
@@ -42,7 +43,8 @@ VAR          = 1.0
 MSIZE        = 3.0
 SCOLOR       = 'b'
 FILENAME     = 'wf.pdf' 
-
+DEMO         = 1  
+MARGIN       = 0.0  #inches
 ############################################################################
 
 def intersection(c1,c2):
@@ -80,7 +82,7 @@ def mymodel(start, ne, oldne, std, RS, mymodel='Moran'):
             beta = 1./alpha
             offsprings=[]
             for x in range(0,ne):
-                limi = 1+int(RS.gamma(alpha,beta,1))
+                limi = 1+int(RS.gamma(alpha,beta,1)[0])
                 #print( "limit",limi)
                 offsprings.append([x for i in range(0,limi)])
             offsprings = reduce(lambda x,y: x+y,offsprings)
@@ -177,7 +179,7 @@ def popsim(generations=50,ne=30,growth=0,samples=[], seed=None, model='Moran', s
     DefaultSize = fig.get_size_inches()
     print( "Default size:      ", DefaultSize[0],"x", DefaultSize[1], "in*in")
     print( "Image size:         %i x %i pt*pt" %(DPI*DefaultSize[0], DPI*DefaultSize[1]))
-    print(myratio)
+    #print(myratio)
     if (myratio[0]==0) and (myratio[1]==0):
         myratio = [nemax/(samplesize+2),2]
     if myratio[0]==-1:
@@ -194,16 +196,24 @@ def popsim(generations=50,ne=30,growth=0,samples=[], seed=None, model='Moran', s
     # create population plot
     ax1.set_clip_on(False)
     ax1.set_frame_on(True)
+    # gray lines
     graylines= ax1.plot([x[0] for x in cgray],[y[1] for y in cgray],color='0.75')
     plt.setp(graylines,linewidth=1.0)
+    # plot the dots
     ax1.plot([x[0] for x in cpointgray],[y[1] for y in cpointgray],color='0.75',marker='o',linestyle='None',markersize=msize,markeredgecolor='0.75')
-    ax1.plot([x[0] for x in ccolor],[y[1] for y in ccolor],color=scolor)
+    # sample lines with scolor
+    samplelines = ax1.plot([x[0] for x in ccolor],[y[1] for y in ccolor],color=scolor)
+    plt.setp(samplelines,linewidth=3.0)
+    # plot the sample dots
     ax1.plot([x[0] for x in cpointcolor],[y[1] for y in cpointcolor],color=scolor,marker='o',linestyle='None',markersize=msizeS,markeredgecolor=scolor)
-    ax1.set_xlabel('Time [Generations into the Past]')
-    if growth==0.0:
-        ax1.set_ylabel('%d Individuals' % ne)
+    if demo == 0:
+        plt.axis('off')
     else:
-        ax1.set_ylabel('Individuals: $N_e^{(0)}$=%d, $N_e^{(%d)}$=%d' % (ne0,generations,ne))
+        ax1.set_xlabel('Time [Generations into the Past]')
+        if growth==0.0:
+            ax1.set_ylabel('%d Individuals' % ne)
+        else:
+            ax1.set_ylabel('Individuals: $N_e^{(0)}$=%d, $N_e^{(%d)}$=%d' % (ne0,generations,ne))
     ax1.set_xlim(-1.,generations+1)
     ax1.set_ylim(-1.,nemax)
     times=[0]
@@ -289,7 +299,7 @@ def popsim(generations=50,ne=30,growth=0,samples=[], seed=None, model='Moran', s
             #print( t)
             #print( times)
             ax2.plot(times, t,color=scolor)
-    plt.savefig(filename,format='pdf')
+    plt.savefig(filename,format='pdf', bbox_inches='tight', pad_inches = margin)
     return [cpointcolor,cpointgray,cgray, ccolor,[times,lineages]]
 
 
@@ -314,6 +324,8 @@ if __name__ == '__main__':
     
     parser.add_argument('-o','--offspringvar',  default=VAR, action='store', type=float, dest='offspring_variance', help='set the offspring variance, this options has only an effect on the CANNING model, good values are 0.5 or 1.5 etc, values close to 0.0 will result in very long coalescent trees, high values will result in very short coalescent trees')
 
+    parser.add_argument('-demo','--demo',  default=DEMO, action='store', type=int, dest='demo', help='for talks we may not need the axes labels "--demo 0", other values will show labels')
+
     parser.add_argument('-n','--Ne',  default=NE, action='store', type=int, dest='ne', help='the effective population size today')
 
     parser.add_argument('-t','--generations',  default=GENERATIONS, action='store', type=int, dest='generations', help='set the number of generations to plot')
@@ -337,6 +349,9 @@ if __name__ == '__main__':
 
     parser.add_argument('-size', '--papersize',  default="[8,11.5]", action='store', dest='papersize', help='size of the paper, this needs to be a list of two values, for example "[8,11.5]"')
 
+    parser.add_argument('-margin','--margin',  default=MARGIN, action='store', type=float, dest='margin', help='Adds a margin to the plotpage, default is 0.0 inches')
+
+
     args = parser.parse_args()
 
     themodel = args.model
@@ -355,7 +370,8 @@ if __name__ == '__main__':
     if args.seed != None:
         seed = int(args.seed)
     else:
-        seed = 42
+        seed = int(time.time())
+        #seed = 42
     filename = args.filename
     if not "pdf" in filename:
         filename = f'{filename}.pdf'
@@ -363,8 +379,10 @@ if __name__ == '__main__':
     scolor = args.color
     dpi = args.dpi   
     ratio = args.ratio
+    demo = args.demo
     papersize = args.papersize
-
+    margin = args.margin
+    
     if not(themodel in allowed_models):
         print( "Type", sys.argv[0], "--help for allowed settings")
 
