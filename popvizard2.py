@@ -26,6 +26,7 @@ import matplotlib
 matplotlib.use('PDF')
 import matplotlib.pyplot as plt
 import matplotlib.gridspec as gridspec
+from functools import reduce
 
 
 ############################################################################
@@ -34,7 +35,7 @@ import matplotlib.gridspec as gridspec
 GENERATIONS  = 50
 NE           =  30
 GROWTH       = 0.00
-BOTTLENECK   = "{0:30}"
+BOTTLENECK   = "{0:30,10:15,20:20}"
 # samples taken from population
 SAMPLESIZE   = 10
 #
@@ -44,7 +45,8 @@ VAR          = 1.0
 MSIZE        = 3.0
 SCOLOR       = 'b'
 FILENAME     = 'wf.pdf' 
-
+DEMO         = 1  
+MARGIN       = 0.0  #inches
 ############################################################################
 
 def intersection(c1,c2):
@@ -201,11 +203,17 @@ def popsim(generations=50,ne=30,growth=0,bottleneck={},samples=[], seed=None, mo
     print ("Image size:         %i x %i pt*pt" %(DPI*DefaultSize[0], DPI*DefaultSize[1]))
     if (myratio[0]==0) and (myratio[1]==0):
         myratio = [nemax/(samplesize+2),2]
-    gs = gridspec.GridSpec(2, 1,height_ratios=myratio)
-    # set up subplots
-    ax1 = plt.subplot(gs[0])
-    ax2 = plt.subplot(gs[1])
-
+    if myratio[0]==-1:
+        onlypopulation=True
+        #gs = gridspec.GridSpec(1, 1)
+        # set up subplots
+        ax1 = plt.subplot()
+    else:
+        onlypopulation=False
+        gs = gridspec.GridSpec(2, 1,height_ratios=myratio)
+        # set up subplots
+        ax1 = plt.subplot(gs[0])
+        ax2 = plt.subplot(gs[1])
     ax1.set_clip_on(False)
     ax1.set_frame_on(True)
     graylines= ax1.plot([x[0] for x in cgray],[y[1] for y in cgray],color='0.75')
@@ -220,6 +228,21 @@ def popsim(generations=50,ne=30,growth=0,bottleneck={},samples=[], seed=None, mo
         ax1.set_ylabel('Individuals: $N_e^{(0)}$=%d, $N_e^{(%d)}$=%d' % (ne0,generations,ne))
     ax1.set_xlim(-1.,generations+1)
     ax1.set_ylim(-1.,nemax)
+
+
+    if demo == 0:
+        plt.axis('off')
+    else:
+        ax1.set_xlabel('Time [Generations into the Past]')
+        if growth==0.0:
+            ax1.set_ylabel('%d Individuals' % ne)
+        else:
+            ax1.set_ylabel('Individuals: $N_e^{(0)}$=%d, $N_e^{(%d)}$=%d' % (ne0,generations,ne))
+    ax1.set_xlim(-1.,generations+1)
+    ax1.set_ylim(-1.,nemax)
+    times=[0]
+    lineages=[]
+
     ###############
     # create tree from the above model
     #       
@@ -300,7 +323,7 @@ def popsim(generations=50,ne=30,growth=0,bottleneck={},samples=[], seed=None, mo
         #print t
         #print times
         ax2.plot(times, t,color=scolor)
-    plt.savefig(filename,format='pdf')
+    plt.savefig(filename,format='pdf', bbox_inches='tight', pad_inches = margin)
     return [cpointcolor,cpointgray,cgray, ccolor,[times,lineages]]
 
 
@@ -325,6 +348,8 @@ if __name__ == '__main__':
     
     parser.add_argument('-o','--offspringvar',  default=VAR, action='store', type=float, dest='offspring_variance', help='set the offspring variance, this options has only an effect on the CANNING model, good values are 0.5 or 1.5 etc, values close to 0.0 will result in very long coalescent trees, high values will result in very short coalescent trees')
 
+    parser.add_argument('-demo','--demo',  default=DEMO, action='store', type=int, dest='demo', help='for talks we may not need the axes labels "--demo 0", other values will show labels')
+
     parser.add_argument('-n','--Ne',  default=NE, action='store', type=int, dest='ne', help='the effective population size today')
 
     parser.add_argument('-t','--generations',  default=GENERATIONS, action='store', type=int, dest='generations', help='set the number of generations to plot')
@@ -347,7 +372,11 @@ if __name__ == '__main__':
 
     parser.add_argument('-dpi', '--dpi',  default=None, action='store', type=int, dest='dpi', help='DPI: dots per inch, None means default, perhaps this should be changed for prodcution plots')
 
-    parser.add_argument('-size', '--papersize',  default=[8,11.5], action='store', dest='papersize', help='size of the paper, this needs to be a list of two values, for example [8,11.5]')
+    parser.add_argument('-size', '--papersize',  default="[8,11.5]", action='store', dest='papersize', help='size of the paper, this needs to be a list of two values, for example "[8,11.5]"')
+
+    
+    parser.add_argument('-margin','--margin',  default=MARGIN, action='store', type=float, dest='margin', help='Adds a margin to the plotpage, default is 0.0 inches')
+
 
     args = parser.parse_args()
 
@@ -371,8 +400,10 @@ if __name__ == '__main__':
     scolor = args.color
     dpi = args.dpi   
     ratio = args.ratio
+    demo = args.demo
     papersize = args.papersize
-
+    margin = args.margin
+    
     if not(themodel in allowed_models):
         print ("Type", sys.argv[0], "--help for allowed settings")
 
@@ -394,6 +425,9 @@ if __name__ == '__main__':
     print ("Marker size:       ", msize)
     print ("Sample color:      ", scolor)
     print ("Plot ratio:        ", ratio)
+    papersize = [float(p) for p in papersize.replace('[','').replace(']','').split(',')]
+    #print(papersize,type(papersize))
+
     width, height = papersize
     print ("Plot size:         ", width, "x", height)
     if dpi==None:
@@ -402,6 +436,8 @@ if __name__ == '__main__':
         thedpi = float(dpi)
     if ratio!=None:
         theratio = [1.0/ratio, 1.0]
+    elif ratio == -1:
+        theratio = [-1,-1]
     else:
         theratio = [0,0]
     #print "popsim(",generations,ne,thegrowth,thebottleneck, sample,seed, themodel,thestd, msize, scolor,filename,thedpi,theratio, papersize,")"
